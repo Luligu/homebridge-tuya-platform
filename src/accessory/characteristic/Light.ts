@@ -1,5 +1,5 @@
 import { Service } from 'homebridge';
-import { TuyaDeviceSchema, TuyaDeviceSchemaEnumProperty, TuyaDeviceSchemaIntegerProperty, TuyaDeviceStatus } from '../../device/TuyaDevice';
+import { TuyaDeviceSchema, TuyaDeviceSchemaEnumProperty, TuyaDeviceSchemaIntegerProperty, TuyaDeviceSchemaType, TuyaDeviceStatus } from '../../device/TuyaDevice';
 import { kelvinToHSV, kelvinToMired, miredToKelvin } from '../../util/color';
 import { limit, remap } from '../../util/util';
 import BaseAccessory from '../BaseAccessory';
@@ -32,7 +32,15 @@ function getLightType(
   mode?: TuyaDeviceSchema,
 ) {
   const modeRange = mode && (mode.property as TuyaDeviceSchemaEnumProperty).range;
-  const { h, s, v } = (color?.property || {}) as never;
+  let h = false, s = false, v = false;
+  if (color?.type === TuyaDeviceSchemaType.String) {
+    h = s = v = true;
+  } else if (color?.type === TuyaDeviceSchemaType.Json) {
+    const property = color?.property || {};
+    h = !!property['h'];
+    s = !!property['s'];
+    v = !!property['v'];
+  }
 
   let lightType: LightType;
   if (on && bright && temp && h && s && v && modeRange && modeRange.includes('colour') && modeRange.includes('white')) {
@@ -58,6 +66,21 @@ function getColorValue(accessory: BaseAccessory, schema: TuyaDeviceSchema) {
   const status = accessory.getStatus(schema!.code);
   if (!status || !status.value || status.value === '' || status.value === '{}') {
     return { h: 0, s: 0, v: 0 };
+  }
+
+  if (schema.type === TuyaDeviceSchemaType.String) {
+    const value = Buffer.from(status.value as string, 'hex');
+    if (value.length === 7) {
+      const r = value.readUInt8(0);
+      const g = value.readUInt8(1);
+      const b = value.readUInt8(2);
+      const h = value.readUInt16BE(3);
+      const s = value.readUInt8(5);
+      const v = value.readUInt8(6);
+      return { r, g, b, h, s, v };
+    } else {
+      return { h: 0, s: 0, v: 0 };
+    }
   }
 
   const { h, s, v } = JSON.parse(status.value as string);
