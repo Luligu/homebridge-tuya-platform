@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/no-empty-function */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { PlatformAccessory, Service, Characteristic, Nullable, CharacteristicValue } from 'homebridge';
-import { debounce } from 'debounce';
+//import { debounce } from 'debounce';
+import debounce from 'debounce';
 import isEqual from 'lodash.isequal';
 
 import { TuyaDeviceSchema, TuyaDeviceSchemaIntegerProperty, TuyaDeviceSchemaMode, TuyaDeviceStatus } from '../device/TuyaDevice';
@@ -60,7 +61,7 @@ class BaseAccessory {
       .setCharacteristic(this.Characteristic.Name, this.device.name)
       .setCharacteristic(this.Characteristic.ConfiguredName, this.device.name)
       .setCharacteristic(this.Characteristic.SerialNumber, this.device.uuid)
-    ;
+      ;
   }
 
   addBatteryService() {

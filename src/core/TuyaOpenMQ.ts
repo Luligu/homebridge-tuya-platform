@@ -32,7 +32,7 @@ export default class TuyaOpenMQ {
   public messageListeners = new Set<TuyaMQTTCallback>();
   public linkId = uuid_v4();
 
-  public timer?: NodeJS.Timer;
+  public timer?: NodeJS.Timeout;
 
   constructor(
     public api: TuyaOpenAPI,
@@ -137,7 +137,7 @@ export default class TuyaOpenMQ {
     const currentPayload = { protocol, message, t };
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const lastPayload : any = this.consumedQueue[this.consumedQueue.length - 1];
+    const lastPayload: any = this.consumedQueue[this.consumedQueue.length - 1];
     if (lastPayload && currentPayload.t < lastPayload.t) {
       this.log.debug('Message received with wrong order.');
       this.log.debug('LastMessage: dataId = %s, t = %s', lastPayload.message.dataId, lastPayload.t);
